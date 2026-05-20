@@ -6,11 +6,13 @@ export const authorize =  async (req: Request, res: Response) => {
 
  const { response_type, client_id, redirect_uri, scope, state} = req.query;
 
- if (!req.session.userId) {
-   res.redirect('auth/login');
+if (!req.session.userId) {
+  res.status(401).json({
+    error: "login_required",
+    message: "User must login before authorization"
+  });
   return;
 }
-
 const response = await authorizeService.authorize({
   responseType: (response_type as string)?.trim(),
   clientId: client_id as string,

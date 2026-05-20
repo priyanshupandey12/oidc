@@ -3,6 +3,7 @@ import express from "express";
 import { env } from "./config/env";
 import sessionMiddleware from "./middleware/session.middleware";
 import cors from 'cors';
+import path from 'node:path';
 
 
 
@@ -19,10 +20,11 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
-
+app.use(express.static(path.resolve("public")));
 
 
 app.use("/clients", clientRoutes);
