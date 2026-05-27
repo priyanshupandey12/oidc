@@ -16,6 +16,7 @@ import userinfoRoutes from "./routes/userinfo.routes";
 import clientRoutes from './routes/client.routes';
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(cors({
   origin: true,
   credentials: true,

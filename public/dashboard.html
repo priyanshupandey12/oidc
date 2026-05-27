@@ -110,8 +110,7 @@
         btn.disabled = true;
         btn.textContent = 'Creating...';
         errorMsg.textContent = '';
-        
-        const redirectUri = 'http://localhost:3000/callback.html'; 
+        const redirectUri = window.location.origin + '/callback.html';
         
         const res = await fetch('/clients/register', {
           method: 'POST',
