@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - OIDC Provider</title>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">OIDC<span>Provider</span></a>
+    <div class="nav-links">
+      <a href="/docs.html">Documentation</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/login.html" class="nav-btn-outline">Sign In</a>
+      <a href="/register.html" class="nav-btn">Get Started</a>
+    </div>
+  </nav>
+
+  <div class="center-wrapper" style="align-items: flex-start; max-width: 1200px; margin: 0 auto; gap: 2rem; display: grid; grid-template-columns: 350px 1fr; width: 100%;">
+    
+    <div class="clean-card fade-in-section" id="dashboard-panel" style="max-width: 100%;">
+      <h1>Welcome to OIDC</h1>
+      <p class="subtitle">You are successfully logged in.</p>
+      
+      <div style="margin-top: 1rem; text-align: center;">
+        <a href="/docs.html" class="secondary-button" style="display: inline-block; text-decoration: none; padding: 0.5rem 1rem; box-sizing: border-box; width: 100%;">View API Documentation</a>
+      </div>
+
+      <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top:0;">Test the OAuth Flow</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Create a test application to simulate a third-party login request.</p>
+        
+        <div class="form-group">
+          <input type="text" id="test-client-name" placeholder="App Name (e.g. My Test App)" value="My Test App">
+        </div>
+        <button id="create-client-btn">Create App & Start Flow</button>
+        <div id="test-error" class="error-message" style="margin-top:0.5rem;"></div>
+      </div>
+
+      <div style="margin-top: 1rem; text-align: center;">
+        <button id="logout-btn" class="danger-button" style="width: auto; padding: 0.5rem 1rem; border: none; font-size: 0.9rem;">Sign Out</button>
+      </div>
+    </div>
+
+    <div class="clean-card fade-in-section" style="max-width: 100%; padding: 3rem;">
+      <h2 style="font-family: var(--font-sans); font-weight: 700; font-size: 1.5rem; margin-bottom: 0.5rem;">FlowSight: Behind the Scenes</h2>
+      <p class="subtitle" style="text-align: left; margin-bottom: 2.5rem;">Visualizing the exact OAuth 2.0 Authorization Code flow mapped to your infrastructure.</p>
+      
+      <div class="mermaid" style="font-family: var(--font-mono); text-align: center;">
+        %%{init: { 
+          'theme': 'base', 
+          'themeVariables': {
+             'primaryColor': '#ffffff',
+             'primaryBorderColor': '#EAEAEA',
+             'primaryTextColor': '#111111',
+             'lineColor': '#EAEAEA',
+             'actorBorder': '#111111',
+             'actorBkg': '#FBFBFA',
+             'actorTextColor': '#111111',
+             'signalColor': '#787774',
+             'signalTextColor': '#111111',
+             'noteBorderColor': '#EAEAEA',
+             'noteBkgColor': '#FBFBFA'
+          },
+          'fontFamily': 'monospace'
+        }}%%
+        sequenceDiagram
+          autonumber
+          participant U as You (User)
+          participant D as Dashboard Simulator
+          participant I as OIDC Backend
+          
+          U->>D: Clicks "Create App & Start Flow"
+          D->>I: POST /clients/register (Name, Scopes)
+          I-->>D: Returns new client_id & secret
+          D->>I: Redirects to /oauth2/authorize
+          I->>U: Presents Consent Screen
+          U->>I: Clicks "Allow Access"
+          I->>D: Redirects back to Simulator with 'code'
+          D->>I: POST /validation/token (code, secret)
+          I-->>D: Returns Access & ID Tokens
+          D->>I: GET /info/userinfo (Access Token)
+          I-->>D: Returns User Profile JSON
+          D-->>U: Displays Profile Card (Success!)
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      try {
+        await fetch('/auth/logout', { method: 'POST' });
+        window.location.href = '/login.html';
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    document.getElementById('create-client-btn').addEventListener('click', async () => {
+      const name = document.getElementById('test-client-name').value || 'Test App';
+      const errorMsg = document.getElementById('test-error');
+      const btn = document.getElementById('create-client-btn');
+      
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        errorMsg.textContent = '';
+        
+        const redirectUri = 'http://localhost:3000/callback.html'; 
+        
+        const res = await fetch('/clients/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            redirectUris: [redirectUri],
+            allowedScopes: ['openid', 'profile', 'email']
+          })
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to create client');
+        }
+
+        const clientId = data.clientId || data.client?.id;
+        const clientSecret = data.clientSecret || data.secret;
+        
+        localStorage.setItem('sim_client_id', clientId);
+        localStorage.setItem('sim_client_secret', clientSecret);
+
+        const state = Math.random().toString(36).substring(7);
+        const authUrl = `/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid profile email&state=${state}`;
+        
+        window.location.href = authUrl;
+
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = 'Create App & Start Flow';
+      }
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

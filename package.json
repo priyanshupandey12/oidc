@@ -6,7 +6,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "dev": "tsc-watch --onSuccess \"node dist/index\""
+    "dev": "tsc-watch --onSuccess \"node dist/index\"",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

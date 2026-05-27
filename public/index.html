@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OIDC Provider - Secure Identity</title>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">OIDC<span>Provider</span></a>
+    <div class="nav-links">
+      <a href="/docs.html">Documentation</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/login.html" class="nav-btn-outline">Sign In</a>
+      <a href="/register.html" class="nav-btn">Get Started</a>
+    </div>
+  </nav>
+
+  <section class="hero-section fade-in-section">
+    <h1 class="hero-title">Secure Identity for Modern Apps.</h1>
+    <p class="hero-subtitle">A high-performance, strictly typed OpenID Connect Identity Provider. Uncluttered architecture. Zero bloat.</p>
+    
+    <div class="hero-actions">
+      <a href="/register.html" class="primary-btn">Start Building</a>
+      <a href="/docs.html" class="secondary-btn">Read Documentation</a>
+    </div>
+  </section>
+
+  <section class="bento-grid">
+    <div class="bento-item bento-large fade-in-section">
+      <h3>OAuth 2.0 Compliant Architecture</h3>
+      <p>Built strictly to the OAuth 2.0 and OpenID Connect specifications. Ensuring seamless, drop-in compatibility with all major client libraries without proprietary lock-in.</p>
+    </div>
+    <div class="bento-item fade-in-section" style="transition-delay: 100ms;">
+      <h3>JWT & RS256</h3>
+      <p>Industry standard JSON Web Tokens signed asymmetrically with RS256. Fully offline verification enabled via our <kbd>/.well-known</kbd> discovery endpoints.</p>
+    </div>
+    <div class="bento-item fade-in-section" style="transition-delay: 200ms;">
+      <h3>Granular Consent</h3>
+      <p>Built-in consent screens guaranteeing users know exactly what permissions they are granting to third-party applications.</p>
+    </div>
+    <div class="bento-item bento-large fade-in-section" style="transition-delay: 300ms;">
+      <h3>Developer First</h3>
+      <p>Simulate end-to-end flows directly from your dashboard. Exchange <code>authorization_code</code> for tokens with zero configuration overhead.</p>
+    </div>
+  </section>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Callback Success - OIDC Provider</title>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div class="center-wrapper">
+    <div class="clean-card fade-in-section" style="max-width: 500px;">
+    
+    <div id="exchange-section">
+      <h1>Authorization Successful!</h1>
+      <p class="subtitle">The third-party app received the authorization code.</p>
+      
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+        In a real application, the third-party backend would securely exchange the code for an Access Token, and use it to fetch your profile. Let's simulate that step!
+      </p>
+      
+      <button id="exchange-btn">Complete Login Flow</button>
+      <a href="/dashboard.html" class="secondary-button" style="display:block; text-align:center; text-decoration:none; margin-top: 0.75rem; line-height: 2.5; box-sizing: border-box;">Cancel & Go Back</a>
+    </div>
+
+    <div id="profile-section" style="display: none; text-align: center;">
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; margin: 0 auto 1.5rem;">
+        <span id="avatar-initial"></span>
+      </div>
+      <h1 id="profile-name" style="margin-bottom: 0.25rem;"></h1>
+      <p id="profile-email" style="color: var(--text-secondary); margin-top: 0; margin-bottom: 2rem;"></p>
+
+      <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px; border: 1px solid var(--panel-border); margin-bottom: 1.5rem; text-align: left; font-size: 0.85rem;">
+        <p style="margin: 0 0 0.5rem 0;"><strong>User ID:</strong> <span id="profile-id" style="font-family: monospace;"></span></p>
+        <p style="margin: 0; color: var(--success);">✓ Tokens successfully exchanged and verified</p>
+      </div>
+      
+      <button id="app-logout-btn" class="danger-button" style="width: auto; padding: 0.5rem 1.5rem;">Sign Out from App</button>
+    </div>
+
+  </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    document.getElementById('exchange-btn').addEventListener('click', async () => {
+      const clientId = localStorage.getItem('sim_client_id');
+      const clientSecret = localStorage.getItem('sim_client_secret');
+      
+      if(!clientId || !clientSecret) {
+        alert("Client credentials not found in local storage. Please start the flow again from the dashboard.");
+        return;
+      }
+      
+      const btn = document.getElementById('exchange-btn');
+      btn.disabled = true;
+      btn.textContent = 'Exchanging & Fetching Profile...';
+      
+      try {
+        const res = await fetch('/validation/token', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: 'http://localhost:3000/callback.html',
+            client_id: clientId,
+            client_secret: clientSecret
+          })
+        });
+        
+        const data = await res.json();
+        
+        if(data.access_token) {
+           const infoRes = await fetch('/info/userinfo', {
+             headers: { 'Authorization': `Bearer ${data.access_token}` }
+           });
+           
+           if(!infoRes.ok) throw new Error("Failed to fetch user profile");
+           const profile = await infoRes.json();
+           
+           document.getElementById('exchange-section').style.display = 'none';
+           document.getElementById('profile-section').style.display = 'block';
+           
+           document.getElementById('profile-name').textContent = profile.name;
+           document.getElementById('profile-email').textContent = profile.email;
+           document.getElementById('profile-id').textContent = profile.id;
+           document.getElementById('avatar-initial').textContent = profile.name ? profile.name.charAt(0).toUpperCase() : '?';
+        } else {
+           throw new Error(data.error || "Token exchange failed");
+        }
+      } catch(err) {
+        alert("Flow failed: " + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Complete Login Flow';
+      }
+    });
+
+    document.getElementById('app-logout-btn').addEventListener('click', () => {
+       window.location.href = '/dashboard.html';
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - OIDC Provider</title>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">OIDC<span>Provider</span></a>
+    <div class="nav-links">
+      <a href="/docs.html">Documentation</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/login.html" class="nav-btn-outline">Sign In</a>
+      <a href="/register.html" class="nav-btn">Get Started</a>
+    </div>
+  </nav>
+
+  <div class="center-wrapper">
+    <div class="clean-card fade-in-section">
+      <h1>Create Account</h1>
+      <p class="subtitle">Join us to continue</p>
+
+      <div id="error-msg" class="error-message"></div>
+
+      <form id="register-form">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required placeholder="••••••••">
+        </div>
+        <button type="submit" id="submit-btn">Sign Up</button>
+      </form>
+
+      <div class="link-text">
+        Already have an account? <a href="/login.html" id="login-link">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('returnTo');
+
+    if(returnTo) {
+      document.getElementById('login-link').href = `/login.html?returnTo=${encodeURIComponent(returnTo)}`;
+    }
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('error-msg');
+      const submitBtn = document.getElementById('submit-btn');
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account...';
+        errorMsg.textContent = '';
+
+        const res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, passwordHash: password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        if (returnTo) {
+          window.location.href = returnTo;
+        } else {
+          window.location.href = '/dashboard.html';
+        }
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign Up';
+      }
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

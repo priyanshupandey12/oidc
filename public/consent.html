@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent - OIDC Provider</title>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div class="center-wrapper">
+    <div class="clean-card fade-in-section">
+      <h1>Authorization Required</h1>
+      <p class="subtitle"><strong id="client-name">An application</strong> is requesting access to your account.</p>
+
+      <div class="scope-list" id="scopes-container" style="border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <!-- Scopes will be inserted here -->
+      </div>
+
+      <form id="consent-form" method="POST" action="/oauth2/consent">
+        <input type="hidden" name="client_id" id="client_id">
+        <input type="hidden" name="redirect_uri" id="redirect_uri">
+        <input type="hidden" name="scope" id="scope">
+        <input type="hidden" name="state" id="state">
+        <input type="hidden" name="response_type" id="response_type">
+        
+        <button type="submit" name="allow" value="true" id="allow-btn">Allow Access</button>
+        <button type="submit" name="allow" value="false" class="danger-button" id="deny-btn">Deny Access</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    document.getElementById('client-name').textContent = urlParams.get('client_name') || 'An application';
+    
+    document.getElementById('client_id').value = urlParams.get('client_id');
+    document.getElementById('redirect_uri').value = urlParams.get('redirect_uri');
+    document.getElementById('scope').value = urlParams.get('scope');
+    document.getElementById('state').value = urlParams.get('state');
+    document.getElementById('response_type').value = urlParams.get('response_type');
+
+    // Display scopes nicely
+    const scopesStr = urlParams.get('scope') || '';
+    const scopes = scopesStr.split(' ').filter(s => s.trim() !== '');
+    const container = document.getElementById('scopes-container');
+    
+    if(scopes.length === 0) {
+      container.innerHTML = '<div class="scope-item" style="margin-bottom:0.75rem;"><span class="scope-icon" style="color:var(--text-primary); margin-right:0.5rem;">✓</span> Basic profile access</div>';
+    } else {
+      scopes.forEach(scope => {
+        let label = scope;
+        if(scope === 'openid') label = 'Verify your identity (OpenID)';
+        if(scope === 'profile') label = 'View your basic profile info';
+        if(scope === 'email') label = 'View your email address';
+        
+        const div = document.createElement('div');
+        div.className = 'scope-item';
+        div.style.marginBottom = '0.75rem';
+        div.innerHTML = `<span class="scope-icon" style="color:var(--text-primary); margin-right:0.5rem;">✓</span> ${label}`;
+        container.appendChild(div);
+      });
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
