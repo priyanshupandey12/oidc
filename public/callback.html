@@ -64,7 +64,7 @@
           body: JSON.stringify({
             grant_type: 'authorization_code',
             code,
-            redirect_uri: 'http://localhost:3000/callback.html',
+            redirect_uri: window.location.origin + '/callback.html',
             client_id: clientId,
             client_secret: clientSecret
           })
