@@ -1,4 +1,4 @@
-# Antigravity OIDC Provider
+# OIDC Provider
 
 A high-performance, strictly typed OpenID Connect and OAuth 2.0 Identity Provider built with Node.js, Express, Drizzle ORM, and PostgreSQL.
 
